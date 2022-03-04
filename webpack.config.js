@@ -38,10 +38,6 @@ const canisterEnvVariables = initCanisterEnv();
 
 const isDevelopment = process.env.NODE_ENV !== "production";
 
-const frontendDirectory = "prixerbe_assets";
-
-const asset_entry = path.join("src", frontendDirectory, "src", "index.html");
-
 module.exports = {
   target: "web",
   mode: isDevelopment ? "development" : "production",
@@ -65,10 +61,6 @@ module.exports = {
       util: require.resolve("util/"),
     },
   },
-  output: {
-    filename: "index.js",
-    path: path.join(__dirname, "dist", frontendDirectory),
-  },
 
   // Depending in the language or framework you are using for
   // front-end development, add module loaders to the default
@@ -82,18 +74,6 @@ module.exports = {
   //  ]
   // },
   plugins: [
-    new HtmlWebpackPlugin({
-      template: path.join(__dirname, asset_entry),
-      cache: false,
-    }),
-    new CopyPlugin({
-      patterns: [
-        {
-          from: path.join(__dirname, "src", frontendDirectory, "assets"),
-          to: path.join(__dirname, "dist", frontendDirectory),
-        },
-      ],
-    }),
     new webpack.EnvironmentPlugin({
       NODE_ENV: "development",
       ...canisterEnvVariables,
@@ -115,7 +95,6 @@ module.exports = {
       },
     },
     hot: true,
-    watchFiles: [path.resolve(__dirname, "src", frontendDirectory)],
     liveReload: true,
   },
 };
