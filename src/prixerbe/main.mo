@@ -235,24 +235,45 @@ actor {
         };
 
         if( not List.isNil(artTypes) ) {
-            List.iterate(
+            let filteredArtTypes : List.List<ArtTypeUpdate> = List.filter(
                 artTypes, 
-                func (at : ArtTypeUpdate) { 
-                    if(at.id == artType.id) {
-                        let id = at.id;
-                        let tempArtType: ArtTypeUpdate = {
-                            id = at.id;
-                            name = artType.name;
-                            description = artType.description;
-                        };
-                        // deleteArtType(id); //Debo arreglar esto.
-                        //Aquí falta reemplazar el valor.
-                        let newArtTypes : List.List<ArtTypeUpdate> = List.push(tempArtType, artTypes);
-                        artTypes := newArtTypes;
-                        val := #ok(());
-                    };
+                func ( a : ArtTypeUpdate ) : Bool {
+                    if(a.id != artType.id) {
+                        return true; 
+                    } else {
+                        false;
+                    }
                 }
             );
+            
+            let tempArtType: ArtTypeUpdate = {
+                id = artType.id;
+                name = artType.name;
+                description = artType.description;
+            };
+            let newArtTypes : List.List<ArtTypeUpdate> = List.push(tempArtType, filteredArtTypes);
+            artTypes := newArtTypes;
+            val := #ok(());
+            // List.iterate(
+            //     artTypes, 
+            //     func (at : ArtTypeUpdate) { 
+            //         if(at.id == artType.id) {
+            //             let id = at.id;
+            //             let tempArtType: ArtTypeUpdate = {
+            //                 id = at.id;
+            //                 name = artType.name;
+            //                 description = artType.description;
+            //             };
+            //             // deleteArtType(id); //Debo arreglar esto.
+            //             let partArtTypes : List.List<ArtTypeUpdate> = List.partition(
+            //                 artTypes, 
+            //                 func ( a : ArtTypeUpdate ) { if(a.id == artType.id) { return true; }; return false; }).0;
+            //             let newArtTypes : List.List<ArtTypeUpdate> = List.push(tempArtType, partArtTypes);
+            //             artTypes := newArtTypes;
+            //             val := #ok(());
+            //         };
+            //     }
+            // );
         };
         return val;
     };

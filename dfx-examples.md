@@ -28,9 +28,9 @@
 
  Update
 
-` dfx canister call prixerbe updateArtType '(record { id = "86053678-D0A3-4F5F-833E-7A7A870D69A2"; name = "Photo"; description = "The art of capture a moment and its soul." } )' ` 
+` dfx canister call prixerbe updateArtType '(record { id = "9E3ECA0C-81A5-4EAA-8A3A-51EC8763F188"; name = "Photo"; description = "The art of capture a moment and its soul." } )' ` 
 
  Delete
 
-` dfx canister call prixerbe deleteArtType '(record { id = UUID_GENERATED })' `
+` dfx canister call prixerbe deleteArtType '(record { id = "9E3ECA0C-81A5-4EAA-8A3A-51EC8763F188"; })' `
 
