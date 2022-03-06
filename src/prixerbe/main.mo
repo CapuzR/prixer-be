@@ -1,19 +1,23 @@
 
+import Iter "mo:base/Iter";
 import Principal "mo:base/Principal";
 import Trie "mo:base/Trie";
 import List "mo:base/List";
+import Text "mo:base/Text";
 import Time "mo:base/Time";
 import Types "./types";
 import Result "mo:base/Result";
 import Debug "mo:base/Debug";
 import Source "mo:uuid/async/SourceV4";
 import UUID "mo:uuid/UUID";
+import Static "./uploader/static";
 
 actor {
 
     //Types definitions.
     type Artist = Types.Artist;
     type Art = Types.Art;
+    type ArtUpdate = Types.ArtUpdate;
     type ArtGallery = Types.ArtGallery;
     type ArtType = Types.ArtType;
     type ArtTypeUpdate = Types.ArtTypeUpdate;
@@ -28,14 +32,28 @@ actor {
 
     //State definition.
     stable var artists : Trie.Trie<Principal, Artist> = Trie.empty();
-    stable var arts : Trie.Trie<Nat, Art> = Trie.empty();
-    stable var artGalleries : Trie.Trie<Nat, ArtGallery> = Trie.empty();
+    stable var arts : Trie.Trie<Text, Art> = Trie.empty();
+    stable var artGalleries : Trie.Trie<Text, ArtGallery> = Trie.empty();
 
     stable var artTypes : List.List<ArtTypeUpdate> = List.nil();
     stable var artCategories : List.List<ArtCategoryUpdate> = List.nil();
     stable var tools : List.List<ToolUpdate> = List.nil();
     stable var toolCategories : List.List<ToolCategoryUpdate> = List.nil();
 
+    stable var staticAssetsEntries : [(
+        Text,        // Asset Identifier (path).
+        Static.Asset // Asset data.
+    )] = [];
+    let staticAssets = Static.Assets(staticAssetsEntries);
+
+
+    system func preupgrade() {
+        staticAssetsEntries := Iter.toArray(staticAssets.entries());
+    };
+
+    system func postupgrade() {
+        staticAssetsEntries := [];
+    };
 
     //CRUD Methods.
 
@@ -172,6 +190,262 @@ actor {
         };       
     };
 
+    //Art CRUD.
+    public shared(msg) func createArt (art : ArtUpdate) : async Result.Result<(), Error> {
+        // Get caller principal
+        let callerId = msg.caller;
+        let textCallerId : Text = Principal.toText(callerId);  
+
+        let g = Source.Source();
+        let artId = UUID.toText(await g.new());
+
+        // Reject AnonymousIdentity
+        if(textCallerId == "2vxsx-fae") {
+            return #err(#NotAuthorized);
+        };
+
+        switch (art.avatarRequest) {
+            case (#Put(data)) {
+                let assetTest : Static.AssetRequest = (
+                        // Inserts/Overwrites the asset.
+                        #Put({
+                            key = artId;
+                            contentType = data.contentType;
+                            payload = data.payload;
+                            callback = data.callback;
+                        })
+                );
+
+                switch (await staticAssets.handleRequest(assetTest)) {
+                    case (#ok())   {
+                        // Associate user art with their principal
+                        let newArt : Art = {
+                            artistPpal = callerId;
+                            artBasics = art.artBasics;
+                            createdAt = Time.now();
+                        };
+
+                        let (newArts, existing) = Trie.put(
+                            arts,           // Target trie
+                            keyText(artId), // Key
+                            Text.equal,    // Equality checker
+                            newArt
+                        );
+
+                        // If there is an original value, do not update
+                        switch(existing) {
+                            // If there are no matches, update arts
+                            case null {
+                                arts := newArts;
+                                #ok(());
+                            };
+                            // Matches pattern of type - opt Art
+                            case (? v) {
+                                #err(#AlreadyExists);
+                            };
+                        };
+                    };
+                    case (#err(e)) { #err(#FailedToWrite(e)); };
+                };
+            };
+            case (#Remove(_)) {
+                return #err(#InvalidRequest); 
+            }; 
+            case (#StagedWrite(_)) {
+                return #err(#InvalidRequest); 
+            };
+        };
+    };
+
+    public query(msg) func privReadArt (id : Text) : async Result.Result<(?Art, ?Static.Asset), Error> {
+        // Get caller principal
+        let callerId = msg.caller;
+        let textCallerId : Text = Principal.toText(callerId);
+
+        // Reject AnonymousIdentity
+        if(Principal.toText(callerId) == "2vxsx-fae") {
+            return #err(#NotAuthorized);
+        };
+
+        let result : ?Art = Trie.find(
+            arts,           //Target Trie
+            keyText(id),      // Key
+            Text.equal     // Equality Checker
+        );
+        switch (result){
+            case null {
+                #err(#NotFound)
+            };
+            case (? v) {
+                if( Principal.equal(v.artistPpal, callerId) ){
+                    switch(staticAssets.getToken(id)) {
+                        case (#err(_)) {
+                            #ok((result, null));
+                        };
+                        case (#ok(v))  {
+                            #ok((result, ?{ contentType = v.contentType; payload = v.payload }));
+                        };
+                    };
+                } else {
+                    return #err(#NotAuthorized);
+                };
+            };
+        };
+    };
+
+    public query func getAssets () : async [(Text, Static.Asset)] {
+        return Iter.toArray(staticAssets.entries());
+    };
+
+    public query(msg) func readAllArt () : async Result.Result<([(Text, Art)], [(Text, Static.Asset)]), Error> {
+        // Get caller principal
+        let callerId = msg.caller;
+        let textCallerId : Text = Principal.toText(callerId);
+
+        // Reject AnonymousIdentity
+        if(Principal.toText(callerId) == "2vxsx-fae") {
+            return #err(#NotAuthorized);
+        };
+
+        let result : Iter.Iter<(Text, Art)> = Trie.iter(arts);
+        
+        // switch (result){
+        //     case null {
+        //         #err(#NotFound)
+        //     };
+        //     case (? v) {
+        //         if( Principal.equal(v.artistPpal, callerId) ){
+                    // switch(staticAssets.getToken(textCallerId)) {
+                    //     case (#err(_)) {
+                    //         #ok((Iter.toArray(result), null));
+                    //     };
+                    //     case (#ok(v))  {
+                            #ok((Iter.toArray(result), Iter.toArray(staticAssets.entries())));
+                    //     };
+                    // };
+        //         } else {
+        //             return #err(#NotAuthorized);
+        //         };
+        //     };
+        // };
+    };
+
+    public shared(msg) func updateArt (art : ArtUpdate, artId : Text) : async Result.Result<(), Error> {
+        // Get caller principal
+        let callerId = msg.caller;
+        let textCallerId : Text = Principal.toText(callerId);  
+
+        // Reject AnonymousIdentity
+        if(textCallerId == "2vxsx-fae") {
+            return #err(#NotAuthorized);
+        };
+
+        let result = Trie.find(
+            arts,
+            keyText(artId),
+            Text.equal 
+        );
+
+        switch(result) {
+            case null {
+                #err(#NotFound)
+            };
+            case (? v) {
+                if(Principal.equal(v.artistPpal, callerId)) {
+                    switch (art.avatarRequest) {
+                        case (#Put(data)) {
+                            let assetTest : Static.AssetRequest = (
+                                // Inserts/Overwrites the asset.
+                                #Put({
+                                    key = artId;
+                                    contentType = data.contentType;
+                                    payload = data.payload;
+                                    callback = data.callback;
+                                })
+                            );
+                            
+                            switch (await staticAssets.handleRequest(assetTest)) {
+                                case (#ok())   {
+                                    let newArt : Art = {
+                                        artistPpal = v.artistPpal;
+                                        artBasics = art.artBasics;
+                                        createdAt = v.createdAt;
+                                    };
+
+                                    arts := Trie.replace(
+                                        arts,           // Target trie
+                                        keyText(artId),      // Key
+                                        Text.equal,    // Equality checker
+                                        ?newArt
+                                    ).0;
+                                    return #ok(());
+                                };
+                                case (#err(e)) { #err(#FailedToWrite(e)); };
+                            };
+                        };
+                        case (#Remove(_)) {
+                            return #err(#InvalidRequest); 
+                        }; 
+                        case (#StagedWrite(_)) {
+                            return #err(#InvalidRequest); 
+                        };
+                    };
+                } else {
+                    return #err(#NotAuthorized);
+                };
+            };
+        };
+    };
+
+    public shared(msg) func deleteArt (artId : Text) : async Result.Result<(), Error> {
+        // Get caller principal
+        let callerId = msg.caller;
+        let textCallerId : Text = Principal.toText(callerId);  
+
+        // Reject AnonymousIdentity
+        if(textCallerId == "2vxsx-fae") {
+            return #err(#NotAuthorized);
+        };
+
+        let result = Trie.find(
+            arts,
+            keyText(artId),
+            Text.equal 
+        );
+
+        switch(result) {
+            case null {
+                #err(#NotFound)
+            };
+            case (? v) {
+                if(Principal.equal(v.artistPpal, callerId)) {
+                    let assetTest : Static.AssetRequest = (
+                        #Remove({
+                            key = artId;
+                            callback = null;
+                        })
+                    );
+                    
+                    switch (await staticAssets.handleRequest(assetTest)) {
+                        case (#ok())   {
+                            arts := Trie.replace(
+                                arts,           // Target trie
+                                keyText(artId),      // Key
+                                Text.equal,    // Equality checker
+                                null
+                            ).0;
+                            return #ok(());
+                        };
+                        case (#err(e)) { #err(#FailedToWrite(e)); };
+                    };
+                } else {
+                    return #err(#NotAuthorized);
+                };
+            };
+        };
+    };
+
+
 //Admin CRUDs
     //ArtType CRUD.
     public shared(msg) func createArtType (artType: ArtType) : async Result.Result<(), Error> {
@@ -186,8 +460,6 @@ actor {
 
         //ID
         let g = Source.Source();
-        Debug.print(debug_show(UUID.toText(await g.new())));
-
         let tempArtType: ArtTypeUpdate = {
             id = UUID.toText(await g.new());
             name = artType.name;
@@ -251,29 +523,10 @@ actor {
                 name = artType.name;
                 description = artType.description;
             };
+
             let newArtTypes : List.List<ArtTypeUpdate> = List.push(tempArtType, filteredArtTypes);
             artTypes := newArtTypes;
             val := #ok(());
-            // List.iterate(
-            //     artTypes, 
-            //     func (at : ArtTypeUpdate) { 
-            //         if(at.id == artType.id) {
-            //             let id = at.id;
-            //             let tempArtType: ArtTypeUpdate = {
-            //                 id = at.id;
-            //                 name = artType.name;
-            //                 description = artType.description;
-            //             };
-            //             // deleteArtType(id); //Debo arreglar esto.
-            //             let partArtTypes : List.List<ArtTypeUpdate> = List.partition(
-            //                 artTypes, 
-            //                 func ( a : ArtTypeUpdate ) { if(a.id == artType.id) { return true; }; return false; }).0;
-            //             let newArtTypes : List.List<ArtTypeUpdate> = List.push(tempArtType, partArtTypes);
-            //             artTypes := newArtTypes;
-            //             val := #ok(());
-            //         };
-            //     }
-            // );
         };
         return val;
     };
@@ -324,6 +577,10 @@ actor {
     //Utils.
     private func key(x : Principal) : Trie.Key<Principal> {
         return { key = x; hash = Principal.hash(x) }
+    };
+
+    private func keyText(x : Text) : Trie.Key<Text> {
+        return { key = x; hash = Text.hash(x) }
     };
 
     //DAB Registry standard.

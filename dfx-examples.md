@@ -16,6 +16,26 @@
 
 ` dfx canister call prixerbe deleteArtist '()' `
 
+## Art
+
+Create
+
+` dfx --identity default canister call prixerbe createArt '(record {artBasics=record {title= "Camino de Dios"; about= "Beach and sun"; artType= record { id="AF5B725E-7019-4C72-956B-E81084A7E532"; name="Photo"; description="The art of capture a moment and its soul."; }  }; avatarRequest=variant { Put=record{ key= "m5spm-rypb4-5dh4x-cfmly-f2ngh-qjvm4-wyntp-kbhfk-5mhn7-ag65r-qae"; contentType= "image/jpeg"; payload = variant{ Payload = vec{ 0x00 } } } } })' `
+
+Read
+
+` dfx canister call prixerbe readAllArt '()' `
+
+` dfx canister call prixerbe privReadArt '("CB40C895-9477-40BD-8970-310C929CF3D7")' `
+
+` dfx canister call prixerbe getAssets '()' `
+
+Update
+
+` dfx --identity default canister call prixerbe updateArt '(record {artBasics=record {title= "Camino de Dios"; artType= record { id="AF5B725E-7019-4C72-956B-E81084A7E532"; name="Photo"; description="The art of capture a moment and its soul."; }  }; avatarRequest=variant { Put=record{ key= "m5spm-rypb4-5dh4x-cfmly-f2ngh-qjvm4-wyntp-kbhfk-5mhn7-ag65r-qae"; contentType= "image/jpeg"; payload = variant{ Payload = vec{ 0x00 } } } } }, "CB40C895-9477-40BD-8970-310C929CF3D7")' `
+
+
+
  ## ArtType
 
  Create
@@ -32,5 +52,4 @@
 
  Delete
 
-` dfx canister call prixerbe deleteArtType '(record { id = "9E3ECA0C-81A5-4EAA-8A3A-51EC8763F188"; })' `
-
+` dfx canister call prixerbe deleteArtType '( "9E3ECA0C-81A5-4EAA-8A3A-51EC8763F188" )' `

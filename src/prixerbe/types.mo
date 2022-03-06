@@ -1,4 +1,6 @@
 
+import Static "./uploader/static";
+
 module {
 
     public type Artist = {
@@ -6,15 +8,25 @@ module {
         tools: [ToolUpdate];
     };
 
-    public type Art = {
-        artistPpal: Principal;
+    public type ArtBasics = {
         title: Text;
         artType: ArtTypeUpdate;
-        artCategory: ArtCategoryUpdate;
-        tools: [ToolUpdate];
-        tags: [Text];
-        about: Text;
-        artGalleries: [Nat]; //DUDA
+        // artCategory: ArtCategoryUpdate;
+        // tools: [ToolUpdate];
+        // tags: [Text];
+        // about: Text;
+        // artGalleries: [Nat]; //DUDA
+    };
+
+    public type Art = {
+        artistPpal: Principal;
+        artBasics: ArtBasics;
+        createdAt: Int;
+    };
+
+    public type ArtUpdate = {
+        artBasics: ArtBasics;
+        avatarRequest: Static.AssetRequest;
     };
 
     public type ArtGallery = {
