@@ -11,14 +11,35 @@ import Rel "Rel";
 ///
 /// See also: Rel module.
 module {
-  public class RelObj<X, Y>(
-    hash : Rel.HashPair<X, Y>,
-    equal : Rel.EqualPair<X, Y>)
+
+
+  public type HashPair<X, Y> =
+    ( X -> Hash.Hash,
+      Y -> Hash.Hash );
+
+  public type EqualPair<X, Y> =
+    ( (X, X) -> Bool,
+      (Y, Y) -> Bool) ;
+
+      public type Relat<X, Y> = [(X,Y)];
+
+  public class Rels<X, Y>(
+    hash : HashPair<X, Y>,
+    equal : EqualPair<X, Y>,
+    init: [(X,Y)])
   {
     var rel = Rel.empty<X,Y>(hash, equal);
+
+    if (init.size() != 0) {
+      for(v in init.vals()) {
+        rel := Rel.put(rel, (v.0, v.1));
+      };
+    };
+
     public func put(x : X, y : Y) {
       rel := Rel.put(rel, (x, y))
     };
+    
     public func delete(x : X, y : Y) {
       rel := Rel.delete(rel, (x, y))
     };

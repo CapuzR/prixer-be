@@ -15,7 +15,7 @@ module {
         // tools: [ToolUpdate];
         // tags: [Text];
         // about: Text;
-        // artGalleries: [Nat]; //DUDA
+        artGalleries: ?Text;
     };
 
     public type Art = {
@@ -26,13 +26,20 @@ module {
 
     public type ArtUpdate = {
         artBasics: ArtBasics;
-        avatarRequest: Static.AssetRequest;
+        artRequest: Static.AssetRequest;
     };
 
     public type ArtGallery = {
+        artistPpal: Principal;
         name: Text;
         description: Text;
-        artIds: [Nat];
+        artGalleryBanner: ?Text; // ArtId
+    };
+
+    public type ArtGalleryUpdate = {
+        name: Text;
+        description: Text;
+        artGalleryBanner: ?Text; // ArtId
     };
 
     public type ArtType = {
