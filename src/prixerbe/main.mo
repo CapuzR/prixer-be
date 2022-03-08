@@ -280,10 +280,6 @@ actor {
                             artistPpal = callerId;
                             artBasics = art.artBasics;
                             createdAt = Time.now();
-                            artCategory = art.artCategory;
-                            tools = art.tools;
-                            tags = art.tags;
-                            about = art.about;
                         };
 
                         let (newArts, existing) = Trie.put(
@@ -532,10 +528,6 @@ actor {
                                         artistPpal = v.artistPpal;
                                         artBasics = art.artBasics;
                                         createdAt = v.createdAt;
-                                        artCategory = art.artCategory;
-                                        tools = art.tools;
-                                        tags = art.tags;
-                                        about = art.about;
                                     };
 
                                     arts := Trie.replace(
@@ -737,6 +729,44 @@ actor {
                     if(artistArtGalleryRel.get1(artGalleryId).size() != 0) {
                         artistArtGalleryRel.delete(callerId, artGalleryId);
                         artistArtGalleryRel.put(callerId, artGalleryId);
+                    };
+                    return #ok(());
+                };
+                return #err(#NotAuthorized);
+            };
+        };
+    };
+
+    public shared(msg) func deleteArtGallery (artGalleryId : Text) : async Result.Result<(), Error> {
+        // Get caller principal
+        let callerId = msg.caller;
+        let textCallerId : Text = Principal.toText(callerId); 
+
+        // Reject AnonymousIdentity
+        if(textCallerId == "2vxsx-fae") {
+            return #err(#NotAuthorized);
+        };
+
+        let result = Trie.find(
+            artGalleries,
+            keyText(artGalleryId),
+            Text.equal 
+        );
+
+        switch(result) {
+            case null {
+                #err(#NotFound)
+            };
+            case (? v) {
+                if(Principal.equal(v.artistPpal, callerId)) {
+                    artGalleries := Trie.replace(
+                        artGalleries,
+                        keyText(artGalleryId),
+                        Text.equal,
+                        null
+                    ).0;
+                    if(artistArtGalleryRel.get1(artGalleryId).size() != 0) {
+                        artistArtGalleryRel.delete(callerId, artGalleryId);
                     };
                     return #ok(());
                 };
