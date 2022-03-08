@@ -11,10 +11,10 @@ module {
     public type ArtBasics = {
         title: Text;
         artType: ArtTypeUpdate;
-        // artCategory: ArtCategoryUpdate;
-        // tools: [ToolUpdate];
-        // tags: [Text];
-        // about: Text;
+        artCategory: ArtCategoryUpdate;
+        tools: ?[ToolUpdate];
+        tags: [Text];
+        about: Text;
         artGalleries: ?Text;
     };
 
@@ -33,13 +33,13 @@ module {
         artistPpal: Principal;
         name: Text;
         description: Text;
-        artGalleryBanner: ?Text; // ArtId
+        artGalleryBanner: ?Text; 
     };
 
     public type ArtGalleryUpdate = {
         name: Text;
         description: Text;
-        artGalleryBanner: ?Text; // ArtId
+        artGalleryBanner: ?Text; 
     };
 
     public type ArtType = {

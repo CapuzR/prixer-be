@@ -280,6 +280,10 @@ actor {
                             artistPpal = callerId;
                             artBasics = art.artBasics;
                             createdAt = Time.now();
+                            artCategory = art.artCategory;
+                            tools = art.tools;
+                            tags = art.tags;
+                            about = art.about;
                         };
 
                         let (newArts, existing) = Trie.put(
@@ -528,6 +532,10 @@ actor {
                                         artistPpal = v.artistPpal;
                                         artBasics = art.artBasics;
                                         createdAt = v.createdAt;
+                                        artCategory = art.artCategory;
+                                        tools = art.tools;
+                                        tags = art.tags;
+                                        about = art.about;
                                     };
 
                                     arts := Trie.replace(
