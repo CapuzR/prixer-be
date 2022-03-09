@@ -887,11 +887,12 @@ actor {
         return #err(#NotFound);     
     };
 
-    public query(msg) func readAllArtTypes () : async Result.Result<List.List<ArtTypeUpdate>, Error> {
+    public query(msg) func readAllArtTypes () : async Result.Result<[ArtTypeUpdate], Error> {
         // Get caller principal
         let callerId = msg.caller;
         let textCallerId : Text = Principal.toText(callerId);
         var val : Result.Result<ArtTypeUpdate, Error> = #err(#NotFound);
+        let temp : Buffer.Buffer<ArtTypeUpdate> = Buffer.Buffer(1);
 
         // Reject AnonymousIdentity
         if(Principal.toText(callerId) == "2vxsx-fae") {
@@ -900,7 +901,14 @@ actor {
 
         if(List.isNil(artTypes)) { return #err(#NotFound); };
 
-        return #ok(artTypes);
+        List.iterate(
+            artTypes,
+            func (a : ArtTypeUpdate) {
+                temp.add(a);
+            }
+        );
+
+        return #ok(temp.toArray());
     };
 
     //ArtCategory...............................................................................
@@ -1014,20 +1022,28 @@ actor {
         return #err(#NotFound);     
     };
 
-    public query(msg) func readAllArtCategorys () : async Result.Result<List.List<ArtCategoryUpdate>, Error> {
+    public query(msg) func readAllArtCategories () : async Result.Result<[ArtCategoryUpdate], Error> {
         // Get caller principal
         let callerId = msg.caller;
         let textCallerId : Text = Principal.toText(callerId);
         var val : Result.Result<ArtCategoryUpdate, Error> = #err(#NotFound);
+        let temp : Buffer.Buffer<ArtCategoryUpdate> = Buffer.Buffer(1);
 
         // Reject AnonymousIdentity
         if(Principal.toText(callerId) == "2vxsx-fae") {
             return #err(#NotAuthorized);
         };
 
-        if(List.isNil(artCategories)) { return #err(#NotFound); };
+        if(List.isNil(artCategories)) { return #err(#NotFound); };'
+        
+        List.iterate(
+            tools,
+            func (a : ArtCategoryUpdate) {
+                temp.add(a);
+            }
+        );
 
-        return #ok(artCategories);
+        return #ok(temp.toArray());
     };
 
     //Tool...............................................................................
@@ -1143,11 +1159,12 @@ actor {
         return #err(#NotFound);     
     };
 
-    public query(msg) func readAllTools () : async Result.Result<List.List<ToolUpdate>, Error> {
+    public query(msg) func readAllTools () : async Result.Result<[ToolUpdate], Error> {
         // Get caller principal
         let callerId = msg.caller;
         let textCallerId : Text = Principal.toText(callerId);
         var val : Result.Result<ToolUpdate, Error> = #err(#NotFound);
+        let temp : Buffer.Buffer<ToolUpdate> = Buffer.Buffer(1);
 
         // Reject AnonymousIdentity
         if(Principal.toText(callerId) == "2vxsx-fae") {
@@ -1155,8 +1172,14 @@ actor {
         };
 
         if(List.isNil(tools)) { return #err(#NotFound); };
+        List.iterate(
+            tools,
+            func (t : ToolUpdate) {
+                temp.add(t);
+            }
+        );
 
-        return #ok(tools);
+        return #ok(temp.toArray());
     };
 
     //ToolCategory...............................................................................
@@ -1272,11 +1295,12 @@ actor {
         return #err(#NotFound);     
     };
 
-    public query(msg) func readAllToolCategories () : async Result.Result<List.List<ToolCategoryUpdate>, Error> {
+    public query(msg) func readAllToolCategories () : async Result.Result<[ToolCategoryUpdate], Error> {
         // Get caller principal
         let callerId = msg.caller;
         let textCallerId : Text = Principal.toText(callerId);
         var val : Result.Result<ToolCategoryUpdate, Error> = #err(#NotFound);
+        let temp : Buffer.Buffer<ToolCategoryUpdate> = Buffer.Buffer(1);
 
         // Reject AnonymousIdentity
         if(Principal.toText(callerId) == "2vxsx-fae") {
@@ -1285,7 +1309,14 @@ actor {
 
         if(List.isNil(toolCategories)) { return #err(#NotFound); };
 
-        return #ok(toolCategories);
+        List.iterate(
+            toolCategories,
+            func (t : ToolCategoryUpdate) {
+                temp.add(t);
+            }
+        );
+
+        return #ok(temp.toArray());
     };
 
 //Utils.
