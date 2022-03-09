@@ -1034,7 +1034,7 @@ actor {
             return #err(#NotAuthorized);
         };
 
-        if(List.isNil(artCategories)) { return #err(#NotFound); };'
+        if(List.isNil(artCategories)) { return #err(#NotFound); };
         
         List.iterate(
             tools,
