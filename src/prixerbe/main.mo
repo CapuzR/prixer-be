@@ -1037,7 +1037,7 @@ actor {
         if(List.isNil(artCategories)) { return #err(#NotFound); };
         
         List.iterate(
-            tools,
+            artCategories,
             func (a : ArtCategoryUpdate) {
                 temp.add(a);
             }
